@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>St Peters SS - Results System</title>
+<style>
+body {font-family: Arial; margin:0; background:#eef2f7;}
+.header {text-align:center; background:#002147; color:white; padding:15px;}
+.header h1 {margin:0;}
+.header p {margin:0; font-style:italic;}
+.login-box {width:320px; margin:60px auto; background:white; padding:20px; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.2);} 
+.login-box img {width:80px; display:block; margin:0 auto 10px;}
+input {width:100%; padding:10px; margin:8px 0;}
+button {width:100%; padding:10px; background:#002147; color:white; border:none; cursor:pointer;}
+.dashboard {display:none;}
+.sidebar {width:220px; background:#002147; color:white; height:100vh; float:left;}
+.sidebar a {display:block; padding:12px; color:white; text-decoration:none; transition:0.3s;}
+.sidebar a:hover, .active {background:#004080;}
+.content {margin-left:220px; padding:20px; animation:fade 0.5s;}
+@keyframes fade {from{opacity:0;} to{opacity:1;}}
+table {width:100%; border-collapse:collapse; background:white;}
+th, td {border:1px solid #ccc; padding:8px; text-align:center;}
+.logout {background:red; margin-top:20px;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-box" id="loginBox">
+<img src="https://via.placeholder.com/80" alt="logo">
+<h2 style="text-align:center;">ST PETERS SS</h2>
+<input type="email" id="email" placeholder="Email">
+<input type="password" id="password" placeholder="Password">
+<button onclick="login()">Login</button>
+<p style="text-align:center; cursor:pointer;">Forgot Password?</p>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard" id="dashboard">
+<div class="header">
+<h1>ST PETERS SECONDARY SCHOOL</h1>
+<p>"Education for Excellence"</p>
+</div>
+
+<div class="sidebar">
+<a onclick="nav(this, showHome)">Home</a>
+<a onclick="nav(this, showTeachers)">Teachers</a>
+<a onclick="nav(this, showStudents)">Students</a>
+<a onclick="nav(this, showClasses)">Classes</a>
+<a onclick="nav(this, showResults)">Results</a>
+<a onclick="nav(this, showReports)">Reports</a>
+<button class="logout" onclick="logout()">Logout</button>
+</div>
+
+<div class="content" id="content"></div>
+</div>
+
+<script>
+let teachers = [];
+let students = {S1:[], S2:[], S3:[], S4:[]};
+let results = [];
+
+function login(){
+ let email = document.getElementById("email").value;
+ let isAdmin = email.endsWith("@admin");
+ let isTeacher = email.endsWith("@peter");
+ if(isAdmin || isTeacher){
+  document.getElementById("loginBox").style.display="none";
+  document.getElementById("dashboard").style.display="block";
+  showHome();
+ } else { alert("Invalid login"); }
+}
+
+function logout(){ location.reload(); }
+
+function nav(el, func){
+ document.querySelectorAll('.sidebar a').forEach(a=>a.classList.remove('active'));
+ el.classList.add('active');
+ func();
+}
+
+function showHome(){
+ document.getElementById("content").innerHTML = `
+ <h2>Dashboard</h2>
+ <p>Total Students: ${students.S1.length+students.S2.length+students.S3.length+students.S4.length}</p>
+ <p>Total Teachers: ${teachers.length}</p>`;
+}
+
+function showTeachers(){
+ document.getElementById("content").innerHTML = `
+ <h2>Add Teacher (Admin)</h2>
+ <input id='tname' placeholder='Name'>
+ <input id='temail' placeholder='Email'>
+ <input id='tpass' placeholder='Password'>
+ <button onclick='addTeacher()'>Add Teacher</button>
+ <h3>Teachers</h3>
+ <table><tr><th>Name</th><th>Email</th></tr>
+ ${teachers.map(t=>`<tr><td>${t.name}</td><td>${t.email}</td></tr>`).join("")}
+ </table>`;
+}
+
+function addTeacher(){
+ teachers.push({name:tname.value, email:temail.value});
+ showTeachers();
+}
+
+function showStudents(){
+ document.getElementById("content").innerHTML = `
+ <h2>Add Students</h2>
+ <input id='sname' placeholder='Student Name'>
+ <select id='sclass'><option>S1</option><option>S2</option><option>S3</option><option>S4</option></select>
+ <button onclick='addStudent()'>Add Student</button>`;
+}
+
+function addStudent(){
+ students[sclass.value].push(sname.value);
+ alert("Added");
+}
+
+function showClasses(){
+ document.getElementById("content").innerHTML = `
+ <h2>Classes</h2>
+ <button onclick="loadForm('S1')">S1</button>
+ <button onclick="loadForm('S2')">S2</button>
+ <button onclick="loadForm('S3')">S3</button>
+ <button onclick="loadForm('S4')">S4</button>
+ <div id='formArea'></div>`;
+}
+
+function grade(m){
+ if(m>=78) return 'A';
+ if(m>=74) return 'B';
+ if(m>=64) return 'C';
+ if(m>=54) return 'D';
+ if(m>=44) return 'E';
+ return 'F';
+}
+
+function loadForm(cls){
+ let subs=["Math","English","Biology","Chemistry","Physics","Geography","History","CRE","ICT","Agriculture","Commerce","Entrepreneurship","Kiswahili","Art","PE"];
+ let html=`<h3>${cls} Entry</h3><table><tr><th>Name</th>`;
+ subs.forEach(s=> html+=`<th>${s}</th>`);
+ html+='</tr>';
+ students[cls].forEach(st=>{
+  html+=`<tr><td>${st}</td>`;
+  subs.forEach(()=> html+=`<td><input type='number'></td>`);
+  html+='</tr>';
+ });
+ html+=`</table><button onclick="saveMarks('${cls}')">Submit Marks</button>`;
+ document.getElementById("formArea").innerHTML=html;
+}
+
+function saveMarks(cls){
+ results.push({class:cls, submitted:true});
+ alert("Marks Submitted");
+}
+
+function showResults(){
+ document.getElementById("content").innerHTML = `
+ <h2>Results Status</h2>
+ <p>Submitted Classes: ${results.map(r=>r.class).join(', ')}</p>`;
+}
+
+function showReports(){
+ document.getElementById("content").innerHTML = `
+ <h2>Generate Report</h2>
+ <input id='rname' placeholder='Student Name'>
+ <select id='rclass'><option>S1</option><option>S2</option><option>S3</option><option>S4</option></select>
+ <input id='term' placeholder='Term'>
+ <textarea id='comment' placeholder='Teacher Comment'></textarea>
+ <button onclick="makeReport()">Make Report</button>
+ <div id='report'></div>`;
+}
+
+function makeReport(){
+ let subs=["Math","English","Biology","Chemistry","Physics","Geography","History","CRE","ICT","Agriculture","Commerce","Entrepreneurship","Kiswahili","Art","PE"];
+ let html=`<div style='background:white;padding:20px;'>
+ <h2 style='text-align:center;'>ST PETERS SS</h2>
+ <p style='text-align:center;'>Report Card</p>
+ <p>Name: ${rname.value}</p>
+ <p>Class: ${rclass.value}</p>
+ <p>Term: ${term.value}</p>
+ <table><tr><th>Subject</th><th>Marks</th><th>Grade</th></tr>`;
+ subs.forEach(s=>{
+  let m=Math.floor(Math.random()*100);
+  html+=`<tr><td>${s}</td><td>${m}</td><td>${grade(m)}</td></tr>`;
+ });
+ html+=`</table>
+ <p>Teacher Comment: ${comment.value}</p>
+ </div>`;
+ document.getElementById("report").innerHTML=html;
+ window.print();
+}
+</script>
+
+</body>
+</html>
