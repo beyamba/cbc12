@@ -1,0 +1,343 @@
+<!DOCTYPE html> <!-- HTML5 document -->
+<html lang="en"> <!-- Root element -->
+<head>
+<meta charset="UTF-8"> <!-- Encoding -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Responsive -->
+<title>ST PETERS SS RESULTS SYSTEM</title>
+
+<style>
+body {
+    font-family: Arial;
+    margin: 0;
+    background: url('https://via.placeholder.com/1200x800') no-repeat center center fixed;
+    background-size: cover;
+} /* Background image */
+.header {
+    text-align: center;
+    background: rgba(0, 33, 71, 0.9);
+    color: white;
+    padding: 10px;
+} /* Header */
+.login-box {
+    width: 320px;
+    margin: 60px auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    border: 2px solid blue; /* Border for login box */
+} /* Login box */
+.login-box img {
+    width: 100px;
+    margin-bottom: 10px;
+} /* Login logo */
+input, select {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+} /* Inputs */
+button {
+    padding: 8px;
+    background: #002147;
+    color: white;
+    border: none;
+    cursor: pointer;
+} /* Buttons */
+.dashboard {
+    display: none;
+} /* Hide dashboard */
+.sidebar {
+    width: 220px;
+    background: #002147;
+    color: white;
+    height: 100vh;
+    float: left;
+} /* Sidebar */
+.sidebar a {
+    display: block;
+    padding: 10px;
+    cursor: pointer;
+} /* Links */
+.sidebar a:hover, .active {
+    background: #004080;
+} /* Hover */
+.content {
+    margin-left: 220px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    min-height: 100vh;
+} /* Content area */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+} /* Table */
+th, td {
+    border: 1px solid #ccc;
+    padding: 5px;
+    text-align: center;
+} /* Cells */
+.report {
+    width: 100%;
+    max-width: 800px;
+    margin: auto;
+    background: white;
+    padding: 15px;
+    font-size: 12px;
+    margin-bottom: 20px;
+    position: relative;
+} /* Report */
+.logo {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 60px;
+} /* Logo on report */
+.chart-container {
+    width: 100%;
+    max-width: 800px;
+    margin: auto;
+} /* Chart container */
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Chart.js library -->
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-box" id="loginBox">
+    <img src="UMU.jpg" alt="School Logo"> <!-- School logo -->
+    <h2>ST PETERS SS</h2>
+    <input id="email" placeholder="Email">
+    <input id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <p><a href="#">Forgot Password?</a></p> <!-- Forgot password link -->
+</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard" id="dashboard">
+    <div class="header">
+        <h2>ST PETERS SECONDARY SCHOOL</h2>
+        <p>"Education for Excellence"</p>
+    </div>
+
+    <div class="sidebar">
+        <a onclick="nav(this, showHome)">Home</a>
+        <a onclick="nav(this, showTeachers)">Teachers</a>
+        <a onclick="nav(this, showStudents)">Students</a>
+        <a onclick="nav(this, showClasses)">Marks Entry</a>
+        <a onclick="nav(this, showResults)">Results</a>
+        <a onclick="nav(this, showReports)">Reports</a>
+        <a onclick="nav(this, showDataAnalysis)">Data Analysis</a> <!-- New Data Analysis tab -->
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <div class="content" id="content"></div>
+</div>
+
+<script>
+// DATA
+let teachers = [];
+let students = {}; // {S1A:[], S1B:[], ...}
+let marksData = {};
+
+// LOGIN
+function login() {
+    let email = document.getElementById('email').value;
+    if (email.endsWith('@admin') || email.endsWith('@peter')) {
+        loginBox.style.display = 'none';
+        dashboard.style.display = 'block';
+        showHome();
+    }
+}
+function logout() { location.reload(); }
+
+// NAV
+function nav(el, fn) {
+    document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+    el.classList.add('active');
+    fn();
+}
+
+// HOME
+function showHome() {
+    content.innerHTML = `<h3>Dashboard</h3><p>Total Students: ${Object.values(students).flat().length}</p>`;
+    showEnrollmentChart(); // Show enrollment chart
+}
+
+// ENROLLMENT CHART
+function showEnrollmentChart() {
+    const ctx = document.createElement('canvas');
+    ctx.id = 'enrollmentChart';
+    content.appendChild(ctx);
+    
+    const labels = Object.keys(students);
+    const data = labels.map(cls => students[cls].length);
+    
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Student Enrollment',
+                data: data,
+                backgroundColor: ['red', 'blue', 'green', 'yellow', 'purple', 'orange'],
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Student Enrollment by Class'
+                }
+            }
+        }
+    });
+}
+
+// TEACHERS
+function showTeachers() {
+    content.innerHTML = `
+    <h3>Add Teacher</h3>
+    <input id='tname' placeholder='Name'>
+    <input id='temail' placeholder='Email'>
+    <input id='tsubject' placeholder='Subject'>
+    <button onclick='addTeacher()'>Add</button>
+    <table><tr><th>Name</th><th>Subject</th></tr>
+    ${teachers.map(t => `<tr><td>${t.name}</td><td>${t.subject}</td></tr>`).join('')}
+    </table>`;
+}
+function addTeacher() {
+    teachers.push({ name: tname.value, email: temail.value, subject: tsubject.value });
+    showTeachers();
+}
+
+// STUDENTS WITH CLASS & STREAM
+function showStudents() {
+    content.innerHTML = `
+    <h3>Add Student</h3>
+    <input id='sname' placeholder='Name'>
+    <select id='sclass'><option>S1A</option><option>S1B</option><option>S2A</option><option>S2B</option><option>S3A</option><option>S4A</option></select>
+    <button onclick='addStudent()'>Add</button>`;
+}
+function addStudent() {
+    if (!students[sclass.value]) students[sclass.value] = [];
+    students[sclass.value].push(sname.value);
+}
+
+// GRADING
+function grade(m) { return m >= 78 ? 'A' : m >= 74 ? 'B' : m >= 64 ? 'C' : m >= 54 ? 'D' : m >= 44 ? 'E' : 'F'; }
+
+// MARK ENTRY
+function showClasses() {
+    let clsOptions = Object.keys(students);
+    content.innerHTML = `${clsOptions.map(c => `<button onclick="loadForm('${c}')">${c}</button>`).join('')}<div id='form'></div>`;
+}
+
+function loadForm(cls) {
+    let subs = ["Math", "English", "Biology", "Chemistry", "Physics", "Geography", "History", "CRE", "ICT", "Agriculture", "Commerce", "Entrepreneurship", "Kiswahili", "Art", "PE"];
+    let html = `<h3>${cls}</h3><table><tr><th>Name</th>${subs.map(s => `<th>${s}</th>`).join('')}</tr>`;
+    students[cls].forEach(st => {
+        html += `<tr><td>${st}</td>`;
+        subs.forEach(sub => {
+            let val = (marksData[st] && marksData[st][sub]) || '';
+            html += `<td><input value="${val}" onchange="saveMark('${st}','${sub}',this.value)"></td>`;
+        });
+        html += '</tr>';
+    });
+    html += '</table>';
+    form.innerHTML = html;
+}
+function saveMark(st, sub, val) { if (!marksData[st]) marksData[st] = {}; marksData[st][sub] = Number(val); }
+
+// RESULTS
+function showResults() { content.innerHTML = `<h3>Students with Marks: ${Object.keys(marksData).length}</h3>`; }
+
+// REPORTS
+function showReports() {
+    let date = new Date().toLocaleDateString();
+    let html = '';
+    Object.keys(students).forEach(cls => {
+        students[cls].forEach(st => {
+            let data = marksData[st] || {};
+            html += `
+            <div class='report'>
+            <img src='' class='jpg'>
+            <h2>REPORT CARD</h2>
+            <p style='text-align:center;'>ST PETERS SECONDARY SCHOOL</p>
+            <p style='text-align:center;'>Education for Excellence</p>
+            <p><b>Name:</b> ${st}</p>
+            <p><b>Class:</b> ${cls}</p>
+            <p><b>Term:</b> Term 1</p>
+            <p><b>Date:</b> ${date}</p>
+            <table>
+            <tr><th>Subject</th><th>Marks</th><th>Grade</th></tr>`;
+            Object.keys(data).forEach(sub => {
+                html += `<tr><td>${sub}</td><td>${data[sub]}</td><td>${grade(data[sub])}</td></tr>`;
+            });
+            html += `</table>
+            <p><b>Teacher Comment:</b> ${generateComment(data)}</p>
+            <p><b>Next Term Begins:</b> __________________</p>
+            </div>`;
+        });
+    });
+    html += `<button onclick='window.print()'>Print</button>`;
+    content.innerHTML = html;
+}
+
+// Generate comments based on marks
+function generateComment(data) {
+    let average = Object.values(data).reduce((a, b) => a + b, 0) / Object.keys(data).length;
+    if (average >= 75) return "Excellent performance!";
+    if (average >= 60) return "Good job, keep it up!";
+    if (average >= 50) return "Satisfactory, but there's room for improvement.";
+    return "Needs improvement, please seek help.";
+}
+
+// DATA ANALYSIS
+function showDataAnalysis() {
+    content.innerHTML = `<h3>Data Analysis</h3><div class="chart-container"><canvas id="performanceChart"></canvas></div>`;
+    showPerformanceChart(); // Show performance chart
+}
+
+// PERFORMANCE CHART
+function showPerformanceChart() {
+    const ctx = document.getElementById('performanceChart');
+    const labels = Object.keys(marksData);
+    const data = labels.map(st => {
+        const totalMarks = Object.values(marksData[st]).reduce((a, b) => a + b, 0);
+        return totalMarks / Object.keys(marksData[st]).length; // Average marks
+    });
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Student Performance',
+                data: data,
+                borderColor: 'blue',
+                fill: false,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Student Performance Over Time'
+                }
+            }
+        }
+    });
+}
+</script>
+
+</body>
+</html>
